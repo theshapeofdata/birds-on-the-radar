@@ -1,0 +1,751 @@
+---
+title: 'Density: Overview'
+author: "Ashwini Petchiappan"
+date: "2023-07-15"
+output: rmdformats::readthedown
+#output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggspatial)
+library(scico)
+library(ggpubr)
+
+```
+
+# Mean and range
+
+```{r spring map, echo=FALSE, warning=FALSE, fig.cap="Density statistics"}
+
+# Data-------------------------------------
+
+file_name <- paste('/Users/ash/Documents/Academic/Oxford/Dissertation/R/Density/Data/density_oscillations.csv')
+density <- read.csv(file_name)
+
+density.spring <- subset(density, data_spring == 1)
+density.fall <- subset(density, data_fall == 1)
+
+stations <- density[ -c(2,5:16) ]
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Summary statistics (SPRING)-----------------------
+
+stats <- density.spring %>% group_by(radar_id) %>% 
+  summarise(across(c(density_spring), list(mean = mean, max = max, min = min)))
+
+stats.spring <- merge(stations, stats)
+stats.spring$density_spring_range <- stats.spring$density_spring_max - stats.spring$density_spring_min
+
+# Summary statistics (FALL)-----------------------
+
+stats <- density.fall %>% group_by(radar_id) %>% 
+  summarise(across(c(density_fall), list(mean = mean, max = max, min = min)))
+
+stats.fall <- merge(stations, stats)
+stats.fall$density_fall_range <- stats.fall$density_fall_max - stats.fall$density_fall_min
+
+# Map elements------------------------------
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot_size = 2
+axis_text_size = 7
+
+# Spring mean----------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring, aes(x = lon, y = lat, 
+                                      color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Mean",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Spring range----------------------------------
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring, aes(x = lon, y = lat, 
+                                      color = density_spring_range),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Range",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Fall mean----------------------------------
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall, aes(x = lon, y = lat, 
+                                      color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Mean",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Fall range----------------------------------
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall, aes(x = lon, y = lat, 
+                                    color = density_fall_range),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Range",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Combine plot-----------------------------------
+
+ggarrange(ggarrange(p1, 
+                            p3, 
+                            nrow=2, ncol=1, labels = c("A", "C"), 
+                            vjust = 1, align="none",
+                            common.legend = TRUE, legend="right"),
+                  ggarrange(p2,
+                            p4,
+                            nrow=2, ncol=1, labels = c("B", "D"), 
+                            vjust = 1, align="none",
+                            common.legend = TRUE, legend="right"),
+                  nrow=1, ncol=2, labels = c("", ""), 
+                  hjust = 0.5, align="none"
+)
+
+```
+
+# Time series
+
+## Spring
+
+```{r spring time series, echo=FALSE, warning=FALSE, fig.cap="Time series of bird migration density at stations in spring", fig.width=12,fig.height=10, results='hide',message=FALSE}
+
+density.spring %>% 
+  ggplot(
+    aes(x=year,
+        y=density_spring)
+  ) +
+  facet_wrap(~radar_id) +
+  geom_point() +
+  geom_smooth(method="lm",se=FALSE) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size=5))
+```
+
+## Fall
+
+```{r fall time series, echo=FALSE, warning=FALSE, fig.cap="Time series of bird migration density at stations in fall", fig.width=12,fig.height=10, results='hide',message=FALSE}
+
+density.fall %>% 
+  ggplot(
+    aes(x=year,
+        y=density_fall)
+  ) +
+  facet_wrap(~radar_id) +
+  geom_point() +
+  geom_smooth(method="lm",se=FALSE) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size=5))
+```
+
+# Oscillation phases
+
+## ENSO
+
+```{r enso map, echo=FALSE, warning=FALSE, results='hide', message=FALSE, fig.cap="Density for ENSO phases"}
+
+# Data-------------------------------------
+
+file_name <- paste('/Users/ash/Documents/Academic/Oxford/Dissertation/R/Density/Data/density_oscillations.csv')
+density <- read.csv(file_name)
+
+# ENSO Classification-----------------------------
+
+density$enso_spring_c <- "Neutral"
+density$enso_spring_c[density$enso_spring <= -0.5] <- "La Nina"
+density$enso_spring_c[density$enso_spring >= 0.5] <- "El Nino"
+
+density$enso_fall_c <- "Neutral"
+density$enso_fall_c[density$enso_fall <= -0.5] <- "La Nina"
+density$enso_fall_c[density$enso_fall >= 0.5] <- "El Nino"
+
+# NAO Classification-----------------------------
+
+density$nao_spring_c[density$nao_spring > 0] <- "Positive"
+density$nao_spring_c[density$nao_spring < 0] <- "Negative"
+
+density$nao_fall_c[density$nao_fall > 0] <- "Positive"
+density$nao_fall_c[density$nao_fall < 0] <- "Negative"
+
+# Remove data points with too few sampling dates
+
+density.spring <- subset(density, data_spring == 1)
+density.fall <- subset(density, data_fall == 1)
+
+# Station details
+
+stations <- density[ -c(2,5:20) ]
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Phase-wise means-----------------------------
+
+stats <- density.spring %>% 
+            group_by(radar_id,enso_spring_c) %>% 
+            summarise(across(c(density_spring), list(mean = mean)))
+
+stats.spring <- merge(stations, stats)
+
+stats <- density.fall %>% 
+            group_by(radar_id,enso_fall_c) %>% 
+            summarise(across(c(density_fall), list(mean = mean)))
+
+stats.fall <- merge(stations, stats)
+
+stats.spring.n <- subset(stats.spring, enso_spring_c == "Neutral")
+stats.spring.en <- subset(stats.spring, enso_spring_c == "El Nino")
+stats.spring.ln <- subset(stats.spring, enso_spring_c == "La Nina")
+
+stats.fall.n <- subset(stats.fall, enso_fall_c == "Neutral")
+stats.fall.en <- subset(stats.fall, enso_fall_c == "El Nino")
+stats.fall.ln <- subset(stats.fall, enso_fall_c == "La Nina")
+
+stats <- density.spring %>% 
+  group_by(radar_id,nao_spring_c) %>% 
+  summarise(across(c(density_spring), list(mean = mean)))
+
+stats.spring <- merge(stations, stats)
+
+stats <- density.fall %>% 
+  group_by(radar_id,nao_fall_c) %>% 
+  summarise(across(c(density_fall), list(mean = mean)))
+
+stats.fall <- merge(stations, stats)
+
+stats.spring.po <- subset(stats.spring, nao_spring_c == "Positive")
+stats.spring.ne <- subset(stats.spring, nao_spring_c == "Negative")
+
+stats.fall.po <- subset(stats.fall, nao_fall_c == "Positive")
+stats.fall.ne <- subset(stats.fall, nao_fall_c == "Negative")
+
+# Map elements------------------------------
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot_size = 2
+axis_text_size = 7
+
+# Map (ENSO)-----------------------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring.n, aes(x = lon, y = lat, 
+                                      color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Neutral",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall.n, aes(x = lon, y = lat, 
+                                        color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Neutral",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring.en, aes(x = lon, y = lat, 
+                                        color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: El Nino",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall.en, aes(x = lon, y = lat, 
+                                      color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: El Nino",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p5 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring.ln, aes(x = lon, y = lat, 
+                                        color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: La Nina",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p6 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall.ln, aes(x = lon, y = lat, 
+                                      color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: La Nina",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+ggarrange(ggarrange(p1, 
+                    p3, 
+                    p5,
+                    nrow=3, ncol=1, labels = c("A", "C", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p2,
+                    p4,
+                    p6,
+                    nrow=3, ncol=1, labels = c("B", "D", "F"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+
+```
+
+## NAO
+
+```{r nao map, echo=FALSE, warning=FALSE, results='hide', message=FALSE, fig.cap="Density for NAO phases"}
+
+# Map (NAO)-----------------------------------------------
+
+p7 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring.po, aes(x = lon, y = lat, 
+                                        color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Positive",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p8 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall.po, aes(x = lon, y = lat, 
+                                      color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Positive",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p9 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring.ne, aes(x = lon, y = lat, 
+                                         color = density_spring_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Negative",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p10 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall.ne, aes(x = lon, y = lat, 
+                                       color = density_fall_mean),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Negative",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+
+ggarrange(ggarrange(p7, 
+                    p9, 
+                    nrow=2, ncol=1, labels = c("A", "C"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p8,
+                    p10,
+                    nrow=2, ncol=1, labels = c("B", "D"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+
+```
+
+# Percentage change
+
+## ENSO
+
+```{r enso pc map, echo=FALSE, warning=FALSE, results='hide', message=FALSE, fig.cap="Percentage change in density between ENSO phases: (A&B) El Nino - Neutral; (C&D) La Nina - Neutral "}
+
+# Data-------------------------------------
+
+file_name <- paste('/Users/ash/Documents/Academic/Oxford/Dissertation/R/Density/Data/density_oscillations.csv')
+density <- read.csv(file_name)
+
+# ENSO Classification
+
+density$enso_spring_c <- "Neutral"
+density$enso_spring_c[density$enso_spring >= 0.5] <- "La Nina"
+density$enso_spring_c[density$enso_spring <= -0.5] <- "El Nino"
+
+density$enso_fall_c <- "Neutral"
+density$enso_fall_c[density$enso_fall >= 0.5] <- "La Nina"
+density$enso_fall_c[density$enso_fall <= -0.5] <- "El Nino"
+
+# NAO Classification
+
+density$nao_spring_c[density$nao_spring > 0] <- "Positive"
+density$nao_spring_c[density$nao_spring < 0] <- "Negative"
+
+density$nao_fall_c[density$nao_fall > 0] <- "Positive"
+density$nao_fall_c[density$nao_fall < 0] <- "Negative"
+
+# Remove data points with too few sampling dates
+
+density.spring <- subset(density, data_spring == 1)
+density.fall <- subset(density, data_fall == 1)
+
+# Station details
+
+stations <- density[ -c(2,5:20) ]
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Analysis
+sites <- stations
+
+sites$en_spring <- NA
+sites$n_spring <- NA
+sites$ln_spring <- NA
+sites$en_fall <- NA
+sites$n_fall <- NA
+sites$ln_fall <- NA
+
+sites$po_spring <- NA
+sites$ne_spring <- NA
+sites$po_fall <- NA
+sites$ne_fall <- NA
+
+for (i in 1:nrow(sites)){
+  station <- sites[i,1]
+  filter.spring <- subset(density.spring, radar_id==station)
+  sites$en_spring[[i]] <- mean(subset(filter.spring, enso_spring_c=="El Nino")$density_spring, na.rm=TRUE)
+  sites$ln_spring[[i]] <- mean(subset(filter.spring, enso_spring_c=="La Nina")$density_spring, na.rm=TRUE)
+  sites$n_spring[[i]] <- mean(subset(filter.spring, enso_spring_c=="Neutral")$density_spring, na.rm=TRUE)
+
+  sites$po_spring[[i]] <- mean(subset(filter.spring, nao_spring_c=="Positive")$density_spring, na.rm=TRUE)
+  sites$ne_spring[[i]] <- mean(subset(filter.spring, nao_spring_c=="Negative")$density_spring, na.rm=TRUE)
+  
+  filter.fall <- subset(density.fall, radar_id==station)
+  sites$en_fall[[i]] <- mean(subset(filter.fall, enso_fall_c=="El Nino")$density_fall, na.rm=TRUE)
+  sites$ln_fall[[i]] <- mean(subset(filter.fall, enso_fall_c=="La Nina")$density_fall, na.rm=TRUE)
+  sites$n_fall[[i]] <- mean(subset(filter.fall, enso_fall_c=="Neutral")$density_fall, na.rm=TRUE)
+  
+  sites$po_fall[[i]] <- mean(subset(filter.fall, nao_fall_c=="Positive")$density_fall, na.rm=TRUE)
+  sites$ne_fall[[i]] <- mean(subset(filter.fall, nao_fall_c=="Negative")$density_fall, na.rm=TRUE)
+  
+}
+
+sites <- sites%>%
+              rowwise%>%
+                    mutate(en_diff_spring = 100*(en_spring - n_spring)/n_spring,
+                           ln_diff_spring = 100*(ln_spring - n_spring)/n_spring,
+                           en_diff_fall = 100*(en_fall - n_fall)/n_fall,
+                           ln_diff_fall = 100*(ln_fall - n_fall)/n_fall,
+                           nao_diff_spring = 100*(ne_spring - po_spring)/po_spring,
+                           nao_diff_fall = 100*(ne_fall - po_fall)/po_fall
+                           )
+
+# Map elements------------------------------
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot_size = 2
+axis_text_size = 7
+
+lim <- 25
+
+# Map (ENSO)-----------------------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                                        color = en_diff_spring),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: El Nino",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                                      color = en_diff_fall),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: El Nino",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                                         color = ln_diff_spring),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: La Nina",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                                       color = ln_diff_fall),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: La Nina",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+ggarrange(ggarrange(p1, 
+                    p3, 
+                    nrow=2, ncol=1, labels = c("A", "C"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p2,
+                    p4,
+                    nrow=2, ncol=1, labels = c("B", "D"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+
+
+```
+
+El Nino: ENSO index <= -0.5
+
+La Nina: ENSO index >= 0.5
+
+[Click here for ENSO phase comparison plots (atmospheric variables)](https://psl.noaa.gov/enso/compare/)
+
+## NAO
+
+```{r nao pc map, echo=FALSE, warning=FALSE, results='hide', message=FALSE, fig.cap="Percentage change in density between NAO phases (Negative - Positive)"}
+
+p5 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = nao_diff_spring),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p6 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = nao_diff_fall),  
+             size = dot_size, shape = 19, alpha = 0.8) +
+  scale_color_scico("Birds", palette = 'vik', limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall",
+       x = NULL, y = NULL, colour = "%") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        #text = element_text(family = "AppleGothic"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+ggarrange(p5, 
+          p6, 
+          nrow=2, ncol=1, labels = c("A", "B"), 
+          vjust = 1, align="none",
+          common.legend = TRUE, legend="right")
+
+```
+
+[Click here for NAO phase comparison maps (atmospheric variables)](http://www.climate.gov/news-features/understanding-climate/climate-variability-north-atlantic-oscillation)
+
+
+
+
+
