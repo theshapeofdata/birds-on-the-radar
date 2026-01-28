@@ -1,0 +1,1703 @@
+---
+title: "Density: PCA"
+author: "Ashwini Petchiappan"
+date: "2023-08-11"
+output: rmdformats::readthedown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+setwd("/Users/ash/Documents/Academic/Oxford/Dissertation/R/Density/")
+
+## Libraries
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggspatial)
+library(scico)
+library(ggrepel)
+library(ggpubr)
+library(missMDA)
+library(FactoMineR)
+library(factoextra)
+library(reshape2)
+library(corrplot)
+library(scales)
+```
+
+```{r spring}
+setwd("/Users/ash/Documents/Academic/Oxford/Dissertation/R/Density/")
+
+# Data-------------------------------------
+
+file_name <- paste('Data/density_pca_spring.csv')
+density.spring <- read.csv(file_name)
+density.pca.spring <- select(density.spring, -c(KOUN,KRMX))  
+
+# Oscillations data
+file_name <- paste('Data/density_reorganised.csv')
+oscillations <- read.csv(file_name)
+oscillations <- oscillations[ -c(2:12,17) ]
+oscillations <- oscillations[!duplicated(oscillations$year),]
+
+#Stations data
+file_name <- paste('Data/density_processed.csv')
+stations <- read.csv(file_name)
+stations <- stations[ -c(2,5:16) ]
+stations <- stations[!duplicated(stations$radar_id),]
+stations.spring <- subset(stations, radar_id!="KOUN")
+stations.spring <- subset(stations.spring, radar_id!="KRMX")
+
+# ENSO Classification
+oscillations$enso_spring_c <- "Neutral"
+oscillations$enso_spring_c[oscillations$enso_spring >= 0.5] <- "La Nina"
+oscillations$enso_spring_c[oscillations$enso_spring <= -0.5] <- "El Nino"
+
+# NAO Classification
+oscillations$nao_spring_c[oscillations$nao_spring > 0] <- "Positive"
+oscillations$nao_spring_c[oscillations$nao_spring < 0] <- "Negative"
+
+# Create dataframe for PCA
+density.pca.spring$enso_spring <- oscillations$enso_spring
+density.pca.spring$nao_spring <- oscillations$nao_spring
+density.pca.spring$enso_spring_c <- oscillations$enso_spring_c
+density.pca.spring$nao_spring_c <- oscillations$nao_spring_c
+
+density.pca.spring <- density.pca.spring[,c(1,146,147,148,149,2:145)]
+
+# PCA Analysis-------------------------------
+
+#nb = estim_ncpPCA(density.pca.spring,ncp.max=5)
+res.comp = imputePCA(density.pca.spring,ncp=10, 
+                     quanti.sup = c(2:3), quali.sup = c(1,4:5))
+
+spring.pca = PCA(res.comp$completeObs, graph = FALSE,
+                 quanti.sup = c(2:3), quali.sup = c(1,4:5))
+
+density.pca.spring$pc1 <- spring.pca$ind$coord[, 1]  # indexing first column
+density.pca.spring$pc2 <- spring.pca$ind$coord[, 2]  # indexing second column
+density.pca.spring$pc3 <- spring.pca$ind$coord[, 3]
+density.pca.spring$pc4 <- spring.pca$ind$coord[, 4]
+density.pca.spring$pc5 <- spring.pca$ind$coord[, 5]
+var <- get_pca_var(spring.pca)
+
+#eig.val.spring <- get_eigenvalue(spring.pca)
+
+```
+
+```{r fall}
+
+# Data-------------------------------------
+
+file_name <- paste('Data/density_pca_fall.csv')
+density.fall <- read.csv(file_name)
+density.pca.fall <- select(density.fall, -c(KOUN,KRMX)) 
+#density.pca.fall <- density.fall
+
+# Oscillations data
+file_name <- paste('Data/density_reorganised.csv')
+oscillations <- read.csv(file_name)
+oscillations <- oscillations[ -c(2:12,17) ]
+oscillations <- oscillations[!duplicated(oscillations$year),]
+
+#Stations data
+file_name <- paste('Data/density_processed.csv')
+stations <- read.csv(file_name)
+stations <- stations[ -c(2,5:16) ]
+stations <- stations[!duplicated(stations$radar_id),]
+stations.fall <- subset(stations, radar_id!="KOUN")
+stations.fall <- subset(stations.fall, radar_id!="KRMX")
+
+# ENSO Classification
+oscillations$enso_fall_c <- "Neutral"
+oscillations$enso_fall_c[oscillations$enso_fall >= 0.5] <- "La Nina"
+oscillations$enso_fall_c[oscillations$enso_fall <= -0.5] <- "El Nino"
+
+# NAO Classification
+oscillations$nao_fall_c[oscillations$nao_fall > 0] <- "Positive"
+oscillations$nao_fall_c[oscillations$nao_fall < 0] <- "Negative"
+
+# Create dataframe for PCA
+density.pca.fall$enso_fall <- oscillations$enso_fall
+density.pca.fall$nao_fall <- oscillations$nao_fall
+density.pca.fall$enso_fall_c <- oscillations$enso_fall_c
+density.pca.fall$nao_fall_c <- oscillations$nao_fall_c
+
+density.pca.fall <- density.pca.fall[,c(1,146,147,148,149,2:145)]
+
+# PCA Analysis-------------------------------
+
+#nb = estim_ncpPCA(density.pca.fall,ncp.max=5)
+res.comp = imputePCA(density.pca.fall,ncp=10, 
+                     quanti.sup = c(2:3), quali.sup = c(1,4:5))
+
+fall.pca = PCA(res.comp$completeObs, graph = FALSE,
+                 quanti.sup = c(2:3), quali.sup = c(1,4:5))
+
+density.pca.fall$pc1 <- fall.pca$ind$coord[, 1]  # indexing first column
+density.pca.fall$pc2 <- fall.pca$ind$coord[, 2]  # indexing second column
+density.pca.fall$pc3 <- fall.pca$ind$coord[, 3]
+density.pca.fall$pc4 <- fall.pca$ind$coord[, 4]
+density.pca.fall$pc5 <- fall.pca$ind$coord[, 5]
+var <- get_pca_var(fall.pca)
+
+#eig.val.fall <- get_eigenvalue(fall.pca)
+
+```
+
+# Scatter plots
+
+## Spring
+
+```{r spring scatter plots, fig.asp=1.5}
+
+al <- 0.5
+
+# ENSO 
+
+p1 <- ggplot(data = density.pca.spring, aes(x = enso_spring, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p2 <- ggplot(data = density.pca.spring, aes(x = enso_spring, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p3 <- ggplot(data = density.pca.spring, aes(x = enso_spring, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p4 <- ggplot(data = density.pca.spring, aes(x = enso_spring, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p5 <- ggplot(data = density.pca.spring, aes(x = enso_spring, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+# NAO 
+
+p6 <- ggplot(data = density.pca.spring, aes(x = nao_spring, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p7 <- ggplot(data = density.pca.spring, aes(x = nao_spring, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p8 <- ggplot(data = density.pca.spring, aes(x = nao_spring, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p9 <- ggplot(data = density.pca.spring, aes(x = nao_spring, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p10 <- ggplot(data = density.pca.spring, aes(x = nao_spring, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C", "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H", "I", "J"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 2.5, align="none"
+) 
+
+```
+
+## Fall
+
+```{r fall scatter plots, fig.asp=1.5}
+
+al <- 0.5
+
+# ENSO 
+
+p1 <- ggplot(data = density.pca.fall, aes(x = enso_fall, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p2 <- ggplot(data = density.pca.fall, aes(x = enso_fall, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p3 <- ggplot(data = density.pca.fall, aes(x = enso_fall, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p4 <- ggplot(data = density.pca.fall, aes(x = enso_fall, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p5 <- ggplot(data = density.pca.fall, aes(x = enso_fall, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "ENSO Index", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+# NAO 
+
+p6 <- ggplot(data = density.pca.fall, aes(x = nao_fall, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p7 <- ggplot(data = density.pca.fall, aes(x = nao_fall, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p8 <- ggplot(data = density.pca.fall, aes(x = nao_fall, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p9 <- ggplot(data = density.pca.fall, aes(x = nao_fall, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+p10 <- ggplot(data = density.pca.fall, aes(x = nao_fall, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "NAO Index", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3")
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C", "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H", "I", "J"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+
+```
+
+## Year
+
+```{r year scatter plots, fig.asp=1.5}
+
+al <- 0.5
+
+# Spring 
+
+p1 <- ggplot(data = density.pca.spring, aes(x = year, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p2 <- ggplot(data = density.pca.spring, aes(x = year, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p3 <- ggplot(data = density.pca.spring, aes(x = year, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p4 <- ggplot(data = density.pca.spring, aes(x = year, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p5 <- ggplot(data = density.pca.spring, aes(x = year, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+# Fall 
+
+p6 <- ggplot(data = density.pca.fall, aes(x = year, y = pc1)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 1") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p7 <- ggplot(data = density.pca.fall, aes(x = year, y = pc2)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 2") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p8 <- ggplot(data = density.pca.fall, aes(x = year, y = pc3)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 3") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p9 <- ggplot(data = density.pca.fall, aes(x = year, y = pc4)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 4") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+p10 <- ggplot(data = density.pca.fall, aes(x = year, y = pc5)) +
+  geom_point(color = "black", alpha = al) +
+  labs(title = NULL,
+       x = "Year", y = "PC 5") +
+  geom_smooth(method="lm", se=TRUE, color = "dodgerblue3") 
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C", "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H", "I", "J"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 2.5, align="none"
+) 
+
+```
+
+# Biplots
+
+## Spring
+
+### ENSO
+
+```{r spring biplots enso}
+
+# Biplot---------------------------------
+
+ggplot(data = density.pca.spring, aes(x = pc1, y = pc2, 
+                                      color=enso_spring_c, shape=enso_spring_c)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 0, lty = 2) +
+  guides(color = guide_legend(title = "ENSO Phase"), 
+         shape = guide_legend(title = "ENSO Phase")) +
+  scale_shape_manual(values = c(15, 17, 16)) +
+  scale_color_scico_d("ENSO Phase", palette = 'batlow', 
+                      direction = -1, end=0.8, na.value = NA) +
+  scale_fill_scico_d("ENSO Phase", palette = 'batlow', 
+                      direction = -1, end=0.8, na.value = NA) +
+  stat_ellipse(geom="polygon", aes(fill = enso_spring_c), 
+               alpha = 0.1,
+               show.legend = FALSE,
+               level = 0.95) +
+  geom_point(alpha = 0.8, size = 2) +
+  xlab("PC 1") +
+  ylab("PC 2") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+
+```
+
+### NAO
+
+```{r spring biplots nao}
+ggplot(data = density.pca.spring, aes(x = pc1, y = pc2, 
+                                      color=nao_spring_c,
+                                      shape=nao_spring_c)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 0, lty = 2) +
+  guides(color = guide_legend(title = "NAO Phase"), 
+         shape = guide_legend(title = "NAO Phase")) +
+  stat_ellipse(geom="polygon", aes(fill = nao_spring_c), 
+               alpha = 0.1, #type="norm",
+               show.legend = FALSE, 
+               level = 0.95) +
+  scale_shape_manual(values = c(15, 17)) +
+  geom_point(alpha = 0.8, size = 2) +
+  scale_color_scico_d("NAO Phase", palette = 'vik', 
+                      direction = -1, begin = 0.2, na.value = NA) +
+  xlab("PC 1") +
+  ylab("PC 2") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+```
+
+## Fall
+
+## ENSO
+
+```{r fall biplots enso}
+
+ggplot(data = density.pca.fall, aes(x = pc1, y = pc2, 
+                                      color=enso_fall_c, shape=enso_fall_c)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 0, lty = 2) +
+  guides(color = guide_legend(title = "ENSO Phase"), 
+         shape = guide_legend(title = "ENSO Phase")) +
+  scale_shape_manual(values = c(15, 17, 16)) +
+  scale_color_scico_d("ENSO Phase", palette = 'batlow', 
+                      direction = -1, end=0.8, na.value = NA) +
+  scale_fill_scico_d("ENSO Phase", palette = 'batlow', 
+                     direction = -1, end=0.8, na.value = NA) +
+  stat_ellipse(geom="polygon", aes(fill = enso_fall_c), 
+               alpha = 0.1,
+               show.legend = FALSE,
+               level = 0.95) +
+  geom_point(alpha = 0.8, size = 2) +
+  xlab("PC 1") +
+  ylab("PC 2") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+
+```
+
+### NAO
+
+```{r fall biplots nao}
+ggplot(data = density.pca.fall, aes(x = pc1, y = pc2, 
+                                      color=nao_fall_c,
+                                      shape=nao_fall_c)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 0, lty = 2) +
+  guides(color = guide_legend(title = "NAO Phase"), 
+         shape = guide_legend(title = "NAO Phase")) +
+  stat_ellipse(geom="polygon", aes(fill = nao_fall_c), 
+               alpha = 0.1, #type="norm",
+               show.legend = FALSE, 
+               level = 0.95) +
+  scale_shape_manual(values = c(15, 17)) +
+  geom_point(alpha = 0.8, size = 2) +
+  scale_color_scico_d("NAO Phase", palette = 'vik', 
+                      direction = -1, begin = 0.2, na.value = NA) +
+  xlab("PC 1") +
+  ylab("PC 2") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+
+```
+
+# Variable contribution plots
+
+## Spring
+
+```{r spring variable contribution}
+pca.vars <- spring.pca$var$coord %>% data.frame
+pca.vars$vars <- rownames(pca.vars)
+pca.vars.m <- melt(pca.vars, id.vars = "vars")
+
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+  r = diameter / 2
+  tt <- seq(0,2*pi,length.out = npoints)
+  xx <- center[1] + r * cos(tt)
+  yy <- center[2] + r * sin(tt)
+  return(data.frame(x = xx, y = yy))
+}
+
+circ <- circleFun(c(0,0),2,npoints = 500)
+
+ggplot() +
+  geom_path(data = circ,aes(x,y), lty = 2, color = "grey", alpha = 0.7) +
+  geom_hline(yintercept = 0, lty = 2, color = "grey", alpha = 0.9) +
+  geom_vline(xintercept = 0, lty = 2, color = "grey", alpha = 0.9) +
+  geom_segment(data = pca.vars, aes(x = 0, xend = Dim.1, y = 0, yend = Dim.2, 
+                                    color = stations.spring$lon),
+               arrow = arrow(length = unit(0.025, "npc"), type = "open"), 
+               lwd = 0.7, alpha = 0.6) + 
+  scale_color_scico("Longitude", palette = 'batlow', #midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  geom_text(data = pca.vars, 
+            aes(x = Dim.1*1.15, y =  Dim.2*1.15, 
+                label = pca.vars$vars), 
+            check_overlap = T, size = 1.5, alpha = 0.8) +
+  xlab("PC 1") + 
+  ylab("PC2") +
+  coord_equal() +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+
+ggplot(data = pca.vars, aes(x = stations.spring$lon, y = Dim.2,)) +
+  geom_point(aes(color=stations.spring$climate), alpha=0.9) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  geom_smooth(method="lm",se=TRUE,color="black") +
+  xlab("Longitude") +
+  ylab("Dim 2")
+
+```
+
+## Fall
+
+```{r fall variable contribution}
+
+# Variable contributions
+pca.vars <- fall.pca$var$coord %>% data.frame
+pca.vars$vars <- rownames(pca.vars)
+pca.vars.m <- melt(pca.vars, id.vars = "vars")
+
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+  r = diameter / 2
+  tt <- seq(0,2*pi,length.out = npoints)
+  xx <- center[1] + r * cos(tt)
+  yy <- center[2] + r * sin(tt)
+  return(data.frame(x = xx, y = yy))
+}
+
+circ <- circleFun(c(0,0),2,npoints = 500)
+
+ggplot() +
+  geom_path(data = circ,aes(x,y), lty = 2, color = "grey", alpha = 0.7) +
+  geom_hline(yintercept = 0, lty = 2, color = "grey", alpha = 0.9) +
+  geom_vline(xintercept = 0, lty = 2, color = "grey", alpha = 0.9) +
+  geom_segment(data = pca.vars, aes(x = 0, xend = Dim.1, y = 0, yend = Dim.2, 
+                                    color = stations.fall$lon),
+               arrow = arrow(length = unit(0.025, "npc"), type = "open"), 
+               lwd = 0.7, alpha = 0.6) + 
+  scale_color_scico("Longitude", palette = 'batlow', #midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA) +
+  geom_text(data = pca.vars, 
+            aes(x = Dim.1*1.15, y =  Dim.2*1.15, 
+                label = pca.vars$vars), 
+            check_overlap = T, size = 1.5, alpha = 0.8) +
+  xlab("PC 1") + 
+  ylab("PC2") +
+  coord_equal() +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_rect(fill= "transparent"))
+
+ggplot(data = pca.vars, aes(x = stations.fall$lon, y = Dim.2)) +
+  geom_point(aes(color=stations.fall$climate), alpha=0.9) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  geom_smooth(method="lm",se=TRUE,color="black") +
+  xlab("Longitude") +
+  ylab("Dim 2")
+
+```
+
+# Scree plots
+
+## Spring
+```{r spring scree plot}
+
+fviz_eig(spring.pca, addlabels = TRUE, ylim = c(0, 50))
+
+```
+
+## Fall
+```{r fall scree plot}
+
+fviz_eig(fall.pca, addlabels = TRUE, ylim = c(0, 50))
+
+```
+
+
+# Maps
+
+```{r map stats}
+# Data-------------------------------------
+
+file_name <- paste('Data/density_processed.csv')
+density <- read.csv(file_name)
+
+density.spring <- subset(density, data_spring == 1)
+density.fall <- subset(density, data_fall == 1)
+
+stations <- density[ -c(2,5:16) ]
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Summary statistics (SPRING)-----------------------
+
+stats <- density.spring %>% group_by(radar_id) %>% 
+  summarise(across(c(density_spring), list(mean = mean, max = max, min = min)))
+
+stats.spring <- merge(stations, stats)
+stats.spring$density_spring_range <- stats.spring$density_spring_max - stats.spring$density_spring_min
+
+
+# Summary statistics (FALL)-----------------------
+
+stats <- density.fall %>% group_by(radar_id) %>% 
+  summarise(across(c(density_fall), list(mean = mean, max = max, min = min)))
+
+stats.fall <- merge(stations, stats)
+stats.fall$density_fall_range <- stats.fall$density_fall_max - stats.fall$density_fall_min
+
+
+# Map elements------------------------------
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot.size = 5
+axis_text_size = 7
+
+# Spring mean----------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring, aes(x = lon, y = lat, 
+                                      size = density_spring_mean, color = climate),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="Birds") +
+  scale_color_scico_d("Climate", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Spring: Mean",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Spring range----------------------------------
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring, aes(x = lon, y = lat, 
+                                      size = density_spring_range, color = climate),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="Birds") +
+  scale_color_scico_d("Climate", palette = 'batlow', #limits = c(0,25),
+                      direction = -1, na.value = NA) +
+  labs(title = "Spring: Range",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+# Fall mean----------------------------------
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.fall, aes(x = lon, y = lat, 
+                                      size = density_fall_mean, color = climate),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="Birds") +
+  scale_color_scico_d("Climate", palette = 'batlow', #limits = c(0,25),
+                    direction = -1, na.value = NA) +
+  labs(title = "Fall: Mean",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Fall range----------------------------------
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stats.spring, aes(x = lon, y = lat, 
+                                      size = density_spring_mean, color = climate),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="Birds") +
+  scale_color_scico_d("Climate", palette = 'batlow', #limits = c(0,25),
+                      direction = -1, na.value = NA) +
+  labs(title = "Fall: Range",
+       x = NULL, y = NULL, colour = "Birds") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Combine plot and save-----------------------------------
+
+ggarrange(ggarrange(p1, 
+                    p3, 
+                    nrow=2, ncol=1, labels = c("A", "C"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p2,
+                    p4,
+                    nrow=2, ncol=1, labels = c("B", "D"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+```
+
+
+## Correlation
+
+```{r map correlation, fig.asp=1.1}
+
+pca.cors.spring <- spring.pca$var$cor %>% data.frame
+pca.cors.spring$vars <- rownames(pca.cors.spring)
+pca.cors.spring$lon <- stations.spring$lon
+pca.cors.spring$lat <- stations.spring$lat
+
+pca.cors.fall <- fall.pca$var$cor %>% data.frame
+pca.cors.fall$vars <- rownames(pca.cors.fall)
+pca.cors.fall$lon <- stations.fall$lon
+pca.cors.fall$lat <- stations.fall$lat
+
+# Map elements
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot.size = 2.5
+axis_text_size = 4
+lim = 0.8
+
+# Spring 
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.spring, aes(x = lon, y = lat, 
+                                         size = abs(Dim.1), color = Dim.1),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                      direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 1",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.spring, aes(x = lon, y = lat, 
+                                         size = abs(Dim.2), color = Dim.2),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 2",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.spring, aes(x = lon, y = lat, 
+                                         size = abs(Dim.3), color = Dim.3),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 3",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.spring, aes(x = lon, y = lat, 
+                                         size = abs(Dim.4), color = Dim.4),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 4",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p5 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.spring, aes(x = lon, y = lat, 
+                                         size = abs(Dim.5), color = Dim.5),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 5",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Fall
+
+p6 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.fall, aes(x = lon, y = lat, 
+                                         size = abs(Dim.1), color = Dim.1),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 1",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p7 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.fall, aes(x = lon, y = lat, 
+                                         size = abs(Dim.2), color = Dim.2),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 2",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p8 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.fall, aes(x = lon, y = lat, 
+                                         size = abs(Dim.3), color = Dim.3),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 3",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p9 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.fall, aes(x = lon, y = lat, 
+                                         size = abs(Dim.4), color = Dim.4),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 4",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p10 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = pca.cors.fall, aes(x = lon, y = lat, 
+                                         size = abs(Dim.5), color = Dim.5),  
+             shape = 19, alpha = 0.8) +
+  scale_size_continuous(range = c(.1, dot.size), name="", limits = c(0,lim))  +
+  scale_color_scico("Correlation", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  labs(title = "Dim 5",
+       x = NULL, y = NULL, colour = "Correlation") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C",
+                                               "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H",
+                                               "I", "J"),
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("Spring", "Fall"), 
+          hjust = c(-4.7,-8.7), vjust = 1.2, align="none"
+)
+
+
+```
+
+### Longitude
+
+```{r correlation scatter plots longitude, fig.asp=1.5}
+
+al <- 0.9
+lims <- c(-0.3,1)
+
+# Spring 
+
+p1 <- ggplot(data = pca.cors.spring, aes(x = lon, y = Dim.1)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 1") +
+  geom_smooth(method="loess", se=TRUE, color = "black")
+
+p2 <- ggplot(data = pca.cors.spring, aes(x = lon, y = Dim.2)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 2") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p3 <- ggplot(data = pca.cors.spring, aes(x = lon, y = Dim.3)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 3") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p4 <- ggplot(data = pca.cors.spring, aes(x = lon, y = Dim.4)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 4") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p5 <- ggplot(data = pca.cors.spring, aes(x = lon, y = Dim.5)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 5") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+# Fall 
+
+p6 <- ggplot(data = pca.cors.fall, aes(x = lon, y = Dim.1)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 1") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p7 <- ggplot(data = pca.cors.fall, aes(x = lon, y = Dim.2)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 2") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p8 <- ggplot(data = pca.cors.fall, aes(x = lon, y = Dim.3)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 3") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p9 <- ggplot(data = pca.cors.fall, aes(x = lon, y = Dim.4)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 4") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p10 <- ggplot(data = pca.cors.fall, aes(x = lon, y = Dim.5)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Longitude", y = "Dim 5") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C", "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H", "I", "J"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("Spring", "Fall"), 
+          hjust = c(-5.4,-9.8), vjust = 1.2, align="none"
+) 
+
+```
+
+### Latitude
+
+```{r correlation scatter plots latitude, fig.asp=1.5}
+
+al <- 0.9
+lims <- c(-0.3,1)
+
+# Spring 
+
+p1 <- ggplot(data = pca.cors.spring, aes(x = lat, y = Dim.1)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 1") +
+  geom_smooth(method="loess", se=TRUE, color = "black")
+
+p2 <- ggplot(data = pca.cors.spring, aes(x = lat, y = Dim.2)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 2") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p3 <- ggplot(data = pca.cors.spring, aes(x = lat, y = Dim.3)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 3") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p4 <- ggplot(data = pca.cors.spring, aes(x = lat, y = Dim.4)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 4") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p5 <- ggplot(data = pca.cors.spring, aes(x = lat, y = Dim.5)) +
+  geom_point(aes(color=stations.spring$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 5") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+# Fall
+
+p6 <- ggplot(data = pca.cors.fall, aes(x = lat, y = Dim.1)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 1") +
+  geom_smooth(method="loess", se=TRUE, color = "black") 
+
+p7 <- ggplot(data = pca.cors.fall, aes(x = lat, y = Dim.2)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 2") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p8 <- ggplot(data = pca.cors.fall, aes(x = lat, y = Dim.3)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow', 
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 3") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p9 <- ggplot(data = pca.cors.fall, aes(x = lat, y = Dim.4)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 4") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+p10 <- ggplot(data = pca.cors.fall, aes(x = lat, y = Dim.5)) +
+  geom_point(aes(color=stations.fall$climate), alpha=al) +
+  scale_color_scico_d("Climate", palette = 'batlow',
+                      direction = -1, na.value = NA) +
+  ylim(lims) +
+  labs(title = NULL, x = "Latitude", y = "Dim 5") +
+  geom_smooth(method="loess", se=TRUE, color = "black")  
+
+# Combine plot
+
+ggarrange(ggarrange(p1,
+                    p2,
+                    p3, 
+                    p4,
+                    p5,
+                    nrow=5, ncol=1, labels = c("A", "B","C", "D", "E"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p6,
+                    p7,
+                    p8, 
+                    p9,
+                    p10,
+                    nrow=5, ncol=1, labels = c("F", "G","H", "I", "J"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("Spring", "Fall"), 
+          hjust = c(-5.4,-9.8), vjust = 1.2, align="none"
+) 
+
+```
+
+## ENSO: Change between phases
+
+```{r map ENSO change}
+
+# Data-------------------------------------
+
+file_name <- paste('Data/density_processed.csv')
+density <- read.csv(file_name)
+
+# ENSO Classification
+
+density$enso_spring_c <- "Neutral"
+density$enso_spring_c[density$enso_spring <= -0.5] <- "La Nina"
+density$enso_spring_c[density$enso_spring >= 0.5] <- "El Nino"
+
+density$enso_fall_c <- "Neutral"
+density$enso_fall_c[density$enso_fall <= -0.5] <- "La Nina"
+density$enso_fall_c[density$enso_fall >= 0.5] <- "El Nino"
+
+# NAO Classification
+
+density$nao_spring_c[density$nao_spring > 0] <- "Positive"
+density$nao_spring_c[density$nao_spring < 0] <- "Negative"
+
+density$nao_fall_c[density$nao_fall > 0] <- "Positive"
+density$nao_fall_c[density$nao_fall < 0] <- "Negative"
+
+# Remove data points with too few sampling dates
+
+density.spring <- subset(density, data_spring == 1)
+density.fall <- subset(density, data_fall == 1)
+
+# Station details
+
+stations <- density[ -c(2,5:16,18:21) ]
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Change-----------------------------
+
+sites <- stations
+
+sites$en_spring <- NA
+sites$n_spring <- NA
+sites$ln_spring <- NA
+sites$en_fall <- NA
+sites$n_fall <- NA
+sites$ln_fall <- NA
+
+sites$po_spring <- NA
+sites$ne_spring <- NA
+sites$po_fall <- NA
+sites$ne_fall <- NA
+
+for (i in 1:nrow(sites)){
+  station <- sites[i,1]
+  filter.spring <- subset(density.spring, radar_id==station)
+  sites$en_spring[[i]] <- log(mean(subset(filter.spring, enso_spring_c=="El Nino")$density_spring, na.rm=TRUE))
+  sites$ln_spring[[i]] <- log(mean(subset(filter.spring, enso_spring_c=="La Nina")$density_spring, na.rm=TRUE))
+  sites$n_spring[[i]] <- log(mean(subset(filter.spring, enso_spring_c=="Neutral")$density_spring, na.rm=TRUE))
+  
+  sites$po_spring[[i]] <- log(mean(subset(filter.spring, nao_spring_c=="Positive")$density_spring, na.rm=TRUE))
+  sites$ne_spring[[i]] <- log(mean(subset(filter.spring, nao_spring_c=="Negative")$density_spring, na.rm=TRUE))
+  
+  filter.fall <- subset(density.fall, radar_id==station)
+  sites$en_fall[[i]] <- log(mean(subset(filter.fall, enso_fall_c=="El Nino")$density_fall, na.rm=TRUE))
+  sites$ln_fall[[i]] <- log(mean(subset(filter.fall, enso_fall_c=="La Nina")$density_fall, na.rm=TRUE))
+  sites$n_fall[[i]] <- log(mean(subset(filter.fall, enso_fall_c=="Neutral")$density_fall, na.rm=TRUE))
+  
+  sites$po_fall[[i]] <- log(mean(subset(filter.fall, nao_fall_c=="Positive")$density_fall, na.rm=TRUE))
+  sites$ne_fall[[i]] <- log(mean(subset(filter.fall, nao_fall_c=="Negative")$density_fall, na.rm=TRUE))
+  
+}
+
+sites <- sites%>%
+  rowwise%>%
+  mutate(en_diff_spring = en_spring - n_spring,
+         ln_diff_spring = ln_spring - n_spring,
+         en_diff_fall = en_fall - n_fall,
+         ln_diff_fall = ln_fall - n_fall,
+         nao_diff_spring = po_spring - ne_spring,
+         nao_diff_fall = po_fall - ne_fall
+  )
+
+# Map elements------------------------------
+
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+dot.size = 2.5
+dot.size.c = 1
+axis_text_size = 7
+lim = 0.25
+
+# Map (ENSO)-----------------------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = en_diff_spring),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Spring: El Nino",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = en_diff_fall),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Fall: El Nino",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p3 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = ln_diff_spring),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Spring: La Nina",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p4 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = ln_diff_fall),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Fall: La Nina",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+
+ggarrange(ggarrange(p1, 
+                    p3, 
+                    nrow=2, ncol=1, labels = c("A", "C"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          ggarrange(p2,
+                    p4,
+                    nrow=2, ncol=1, labels = c("B", "D"), 
+                    vjust = 1, align="none",
+                    common.legend = TRUE, legend="right"),
+          nrow=1, ncol=2, labels = c("", ""), 
+          hjust = 0.5, align="none"
+)
+
+```
+
+mt: Migration Traffic (number of birds)
+
+$$ 
+ENSO\ phase = \begin{cases} El\ Niño,\ ENSO\ index \ge 0.5  \\ 
+Neutral, -0.5 \le ENSO\ index \le 0.5 \\ 
+La\ Niña,\ ENSO\ index \le -0.5 \end{cases} 
+$$
+
+
+$$
+Change = El\ Niño\ (or)\ La\ Niña\ phase - Neutral\ phase
+$$
+
+### Anomaly maps
+
+![ENSO precipitation rate anomaly](/Users/ash/Documents/Academic/Oxford/Dissertation/Presentations/Graphics/ENSO_preci_rate.png)
+
+
+
+![ENSO temperature anomaly](/Users/ash/Documents/Academic/Oxford/Dissertation/Presentations/Graphics/ENSO_temp.png)
+
+## NAO: Change between phases
+
+```{r map NAO change}
+
+lim = 0.25
+
+# Map (NAO)-----------------------------------------------
+
+p1 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = nao_diff_spring),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Spring",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+p2 <- ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               color = nao_diff_fall),  
+             size = dot.size, shape = 19, alpha = 0.9) +
+  scale_color_scico("log(mt)", palette = 'vik', midpoint = 0, limits = c(-lim,lim),
+                    direction = -1, na.value = NA, oob = scales::squish) +
+  geom_point(data = sites, aes(x = lon, y = lat, 
+                               shape = climate),  
+             size = dot.size.c, color = "black", alpha = 0.8) +
+  scale_shape_manual(values = c(8, 1, 4, 3)) +
+  labs(title = "Fall",
+       x = NULL, y = NULL, colour = "log(mt)", shape = "Climate") +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50", size = axis_text_size),
+        axis.text.y = element_text(colour = "grey50", size = axis_text_size),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+
+ggarrange(p1, 
+          p2, 
+          nrow=2, ncol=1, labels = c("A", "B"), 
+          vjust = 1, align="none",
+          common.legend = TRUE, legend="right")
+
+```
+
+mt: Migration Traffic (number of birds)
+
+$$ 
+NAO\ phase = \begin{cases} Positive,\ NAO\ index > 0  \\ 
+Negative,\ NAO\ index < 0 \end{cases} 
+$$
+
+$$
+Change = Positive\ phase - Negative\ phase
+$$
+
+### Temperature anomaly
+
+![NAO temperature anomaly](/Users/ash/Documents/Academic/Oxford/Dissertation/Presentations/Graphics/NAO.png)
+
+# Notes
+
+## LM results
+
+1. **Spring** 
+  - NAO: PC 1 (- low), 2 (-)
+  - ENSO: PC 2 (-)
+  - Year: PC 1 (+), 2 (-)
+
+2. **Fall**
+  - NAO: PC 1 (- low), 2 (- low), 5 (-)
+  - ENSO: PC 5 (-)
+  - Year: PC 1 (+), 2 (-)
+
+## Observations
+
+### Scatter plots
+
+1. **Spring**
+  - PC3 (-) correlated with NAO
+
+2. **Fall**
+  - PC3 (+) correlated with NAO
+  - PC4 (-) correlated with ENSO
+  
+3. **Year**
+  - PC1&2 show cyclical effect as well as increasing/decreasing trends
+  - Oscillations could cause population changes?
+
+### Correlation maps 
+
+1. **PC1**: *Most stations positively correlated*
+  - Captures changes in density across years that don't have spatial component
+    + Changes in radar sensitivity over years
+  - NAO (-) correlation means that fewer birds migrate overall in NAO+ phase
+    + Avoiding warm conditions?
+
+2. **PC2**: *E US positively correlated, W negative*
+  - Considering correlation (-) with NAO, W has higher density in NAO+ and E in NAO-
+    + Higher density in negative temperature anomaly areas
+    + Temperature correlated to other variables
+    + Prefer milder weather? 
+  - In spring, (-) correlation with ENSO means El Niño sees higher density in E and lower in W
+  - Year (-) correlation (hard to interpret)
+    + Westward shift in density?
+
+3. **PC3**: *South negative, rest positive*
+  - In spring, - correlation with NAO
+  - In fall, + correlation with NAO
+  - In spring, NAO- has higher density in south (opposite for fall)
+    + Changing winds?
+
+4. **PC4**: *In fall, NW Pacific coast positively correlated, rest mostly negative; spring unclear*
+  - Considering (-) correlation with ENSO in fall, Pacific coast has higher density during El Niño
+    + Stopover near coast in drought conditions?
+
+5. **PC5**: *In fall, E US positively correlated, interior W negative; spring unclear*
+  - Both ENSO and NAO (-) correlated in fall
+    + Combined effect?
+    + When NAO- coincides with El Niño, greater increase in density in E US and W coast
+    + When NAO+ coincides with La Niña, greater increase in density in interior W
+
+## General trends
+
+- Strong longitude component in density changes
+  + Changes in migration routes but not destinations?
+- NAO effect stronger than ENSO
+- Fall shows stronger spatial component in density changes (in contrast to phenology changes)
+    
+## Summary of PCs
+
+1. Non-spatial component
+2. E/W split
+3. South
+4. NW Pacific coast (fall)
+5. Interior W (fall)
+
+## Questions
+
+1. *Would EN/NAO effects carry over to subsequent year/season?*
+  - This would lower correlation with ENSO/NAO index
+2. *Is latitude influence in density changes lower because migration happens in N/S direction?*
+  - Latitude linked to temperature, and therefore, timing (phenology) of migration
+  - Is ENSO impact lower than NAO for the same reason? Because it has more of a latitude gradient?
+3. *What would matter more: hotter/colder or dryer/wetter conditions?*
+  - Temperature effects would have showed up as latitude-wise density changes?
+4. *Would relative food/water availability be a factor?*
+  - Linked to environmental factors
+
+# Details
+
+## Climate classification
+
+*Köppen-Geiger climate classification system*
+
+- **A**: Tropical
+- **B**: Dry
+- **C**: Temperate
+- **D**: Continental
+
+[Click here for details about climate classes in the US](https://climateknowledgeportal.worldbank.org/country/united-states#:~:text=The%20five%20main%20groups%20are,your%20mouse%20over%20the%20legend.)
+
+## Radar stations
+
+```{r map station, fig.cap="Radar stations"}
+# Map elements---------------
+theme_set(theme_bw())
+spdf_usa <- ne_countries(country='United States of America', scale = "medium", returnclass = "sf")
+
+# Data-------------------------
+
+file_name <- paste('Data/density_processed.csv')
+stations <- read.csv(file_name)
+stations <- stations[!duplicated(stations$radar_id),]
+
+# Plot--------------------
+
+ggplot(data = spdf_usa) +
+  geom_sf(fill= "grey80", lwd=0) +
+  coord_sf(xlim = c(-67, -125), ylim = c(23, 50), expand = TRUE) +
+  geom_point(data = stations, aes(x = lon, y = lat), size = 1, 
+             shape = 19, fill = "black", alpha = 0.7) +
+  geom_label_repel(mapping = aes(x = lon, y = lat, label = radar_id), data=stations,
+                   max.overlaps = 30, size = 2.5, label.padding = 0.1, label.r = 0) +
+  
+  labs(
+       x = NULL, y = NULL, colour = NULL) +
+  theme(panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "aliceblue"),
+        axis.text.x = element_text(colour = "grey50"),
+        axis.text.y = element_text(colour = "grey50"),
+        axis.ticks = element_line(color = "grey50"),
+        panel.border = element_blank())
+```
+
+## El Niño Southern Oscillation (ENSO)
+
+[Click here for details about ENSO](https://www.climate.gov/news-features/blogs/enso/what-el-niño–southern-oscillation-enso-nutshell)
+
+[Click here for ENSO phase comparison plots (atmospheric variables)](https://psl.noaa.gov/enso/compare/)
+
+## North Atlantic Oscillation (NAO)
+
+[Click here for details about NAO](https://www.climate.gov/news-features/understanding-climate/climate-variability-north-atlantic-oscillation)
+
