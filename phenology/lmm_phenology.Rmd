@@ -1,0 +1,354 @@
+---
+title: "Phenology: Linear Mixed Models"
+author: "Ashwini Petchiappan"
+date: "2023-07-25"
+output: rmdformats::readthedown
+#output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r libraries and data, include=FALSE}
+setwd("/Users/ash/Documents/Academic/Oxford/Dissertation/R/Phenology/")
+
+## Libraries
+library(dplyr)
+library(lme4)
+library(ggplot2)
+library(sjPlot)
+
+# Data-------------------------------------
+
+file_name <- paste('Data/phenology_lmm_spring.csv') 
+phenology_spring <- read.csv(file_name)
+
+file_name <- paste('Data/phenology_lmm_fall.csv') 
+phenology_fall <- read.csv(file_name)
+
+```
+
+# Climate classification
+
+Köppen-Geiger climate classification system
+
+- A: Tropical
+- B: Dry
+- C: Temperate
+- D: Continental
+- E: Polar
+
+[Click here for details about climate classes in the US](https://climateknowledgeportal.worldbank.org/country/united-states#:~:text=The%20five%20main%20groups%20are,your%20mouse%20over%20the%20legend.)
+
+# El Niño Southern Oscillations (ENSO)
+
+[Click here for details about ENSO](https://www.climate.gov/news-features/blogs/enso/what-el-niño–southern-oscillation-enso-nutshell)
+
+[Click here for ENSO phase comparison plots (atmospheric variables)](https://psl.noaa.gov/enso/compare/)
+
+## Spring
+
+### q10
+```{r}
+
+lmm1 <- lmer(q10 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','temp','climate'))
+
+```
+
+### q50
+```{r}
+
+lmm1 <- lmer(q50 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','LATITUDE_N'))
+#plot_model(lmm1, type='pred', terms=c('enso_index','LONGITUDE_W'))
+
+```
+
+### q90
+
+```{r}
+
+lmm1 <- lmer(q90 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','LONGITUDE_W','climate'))
+
+```
+
+### Duration (q90 - q10)
+
+```{r}
+
+lmm1 <- lmer(q90-q10 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','LONGITUDE_W'))
+
+```
+
+## Fall
+
+### q10
+```{r}
+
+lmm1 <- lmer(q10 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('year','enso_index','climate'))
+
+```
+
+### q50
+```{r}
+
+lmm1 <- lmer(q50 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','LONGITUDE_W','climate'))
+
+```
+
+### q90
+
+```{r}
+
+lmm1 <- lmer(q90 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('climate'))
+
+```
+
+### Duration (q90 - q10)
+
+```{r}
+
+lmm1 <- lmer(q90-q10 ~ enso_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('enso_index','LONGITUDE_W','climate'))
+
+```
+
+# North Atlantic Oscillations (NAO)
+
+[Click here for details about NAO](https://www.climate.gov/news-features/understanding-climate/climate-variability-north-atlantic-oscillation)
+
+## Spring
+
+### q10
+
+```{r}
+
+lmm1 <- lmer(q10 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','LATITUDE_N','climate'))
+#plot_model(lmm1, type='pred', terms=c('nao_index','LONGITUDE_W','climate'))
+
+```
+
+### q50
+
+```{r}
+
+lmm1 <- lmer(q50~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('climate'))
+
+```
+
+### q90
+
+```{r}
+
+lmm1 <- lmer(q90~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('climate'))
+
+```
+
+### Duration (q90 - q10)
+
+```{r}
+
+lmm1 <- lmer(q90-q10 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','LATITUDE_N','climate'))
+#plot_model(lmm1, type='pred', terms=c('nao_index','LONGITUDE_W','climate'))
+
+```
+
+## Fall
+
+### q10
+
+```{r}
+
+lmm1 <- lmer(q10 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('year','nao_index','climate'))
+
+```
+
+### q50
+
+```{r}
+
+lmm1 <- lmer(q50 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('year','nao_index','climate'))
+
+```
+
+### q90
+
+```{r}
+
+lmm1 <- lmer(q90 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('climate'))
+
+```
+
+### Duration (q90 - q10)
+
+```{r}
+
+lmm1 <- lmer(q90-q10 ~ nao_index * temp + year + climate + LATITUDE_N + LONGITUDE_W + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W +  (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('year','nao_index','climate'))
+
+```
+
+# Combined effects
+
+## Spring
+
+### q10
+```{r}
+lmm1 <- lmer(q10 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_spring) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','climate','enso_index'))
+
+```
+
+### q50
+```{r}
+lmm1 <- lmer(q50 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_spring)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','LONGITUDE_W','enso_index'))
+
+```
+
+### q90
+```{r}
+lmm1 <- lmer(q90 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_spring)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','temp','enso_index'))
+
+```
+
+### Duration (q90-q10)
+```{r}
+lmm1 <- lmer(q90-q10 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_spring)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','LATITUDE_N','enso_index'))
+
+```
+
+## Fall
+
+### q10
+```{r}
+lmm1 <- lmer(q10 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_fall)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','climate','enso_index'))
+
+```
+
+### q50
+```{r}
+lmm1 <- lmer(q50 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_fall)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('year','enso_index','nao_index'))
+
+```
+
+### q90
+```{r}
+lmm1 <- lmer(q90 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + nao_index:LONGITUDE_W + enso_index:nao_index + (1|radar_id), data=phenology_fall)  
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','temp','enso_index'))
+
+```
+
+### Duration (q90-q10)
+```{r}
+lmm1 <- lmer(q90-q10 ~ enso_index + nao_index + temp + year + climate + LATITUDE_N + LONGITUDE_W + enso_index:temp + enso_index:climate + enso_index:LATITUDE_N + enso_index:LONGITUDE_W + nao_index:temp + nao_index:climate + nao_index:LATITUDE_N + enso_index:nao_index + nao_index:LONGITUDE_W + (1|radar_id), data=phenology_fall) 
+summary(lmm1)
+drop1(lmm1,test="Chisq")
+
+plot_model(lmm1, type='pred', terms=c('nao_index','climate','enso_index'))
+
+```
+
+
+# Notes
+1. Climate important in most cases.
+2. Continental climate shows most variation.
+3. In some cases, effects are reversed in East and West coasts.
+4. Yearly decreasing trend in fall.
+5. El Nino delays start of spring migration 
+  - More in cold and continental conditions.
+  - Less delay in q50 and q90. Therefore, duration decreases.
+  - Longitude interaction significant (except for start).
+6. No strong NAO influence in fall.
+7. In spring, negative NAO phases:
+  - Early start in higher latitudes, and late start in lower latitudes.
+  - No change in q50, q90. Therefore, duration changes.
+  - Longer duration in higher latitudes, and shorter in lower latitudes.
+
